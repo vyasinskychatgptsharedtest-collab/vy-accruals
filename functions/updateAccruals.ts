@@ -16,29 +16,26 @@ interface ExternalAccrual {
 
 export const updateAccruals = async (prisma: PrismaClient, body: UpdateDto<ExternalAccrual[]>) => {
     for (const accrual of body.data) {
-        await prisma.$executeRaw`
-            INSERT INTO accruals (
-                account_external_id,
-                period_name,
-                period_id,
-                in_balance,
-                total_sum,
-                fine,
-                to_pay,
-                payed,
-                invoice_exists
-            ) VALUES (
-                ${accrual.accountId},
-                ${accrual.periodName},
-                ${accrual.periodId},
-                ${accrual.inBalance},
-                ${accrual.sum},
-                ${accrual.fine},
-                ${accrual.toPay},
-                ${accrual.payed},
-                ${accrual.invoiceExists}
-            ) ON CONFLICT DO NOTHING;
-        `;
+        await prisma.accrual.upsert({
+            where: {
+                accountExternalId_periodName: {
+                    accountExternalId: accrual.accountId,
+                    periodName: accrual.periodName,
+                },
+            },
+            update: {},
+            create: {
+                accountExternalId: accrual.accountId,
+                periodName: accrual.periodName,
+                periodId: accrual.periodId,
+                inBalance: accrual.inBalance,
+                totalSum: accrual.sum,
+                fine: accrual.fine,
+                toPay: accrual.toPay,
+                payed: accrual.payed,
+                invoiceExists: accrual.invoiceExists,
+            },
+        });
     }
     return new SuccessResponse();
 };

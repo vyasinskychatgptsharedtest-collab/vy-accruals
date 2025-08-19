@@ -14,25 +14,19 @@ interface ExternalAccount {
 
 export const updateAccounts = async (prisma: PrismaClient, body: UpdateDto<ExternalAccount[]>) => {
     for (const account of body.data) {
-        await prisma.$executeRaw`
-            INSERT INTO accounts (
-                account_external_id,
-                organization_name,
-                organization_id,
-                address,
-                type,
-                debt,
-                apartment_id
-            ) VALUES (
-                ${account.id},
-                ${account.organizationName},
-                ${account.organizationId},
-                ${account.address},
-                ${account.type},
-                ${account.debt},
-                ${account.apartmentId}
-            ) ON CONFLICT (account_external_id) DO NOTHING;
-        `;
+        await prisma.account.upsert({
+            where: { accountExternalId: account.id },
+            update: {},
+            create: {
+                accountExternalId: account.id,
+                organizationName: account.organizationName,
+                organizationId: account.organizationId,
+                address: account.address,
+                type: account.type,
+                debt: account.debt,
+                apartmentId: account.apartmentId,
+            },
+        });
     }
     return new SuccessResponse();
 };

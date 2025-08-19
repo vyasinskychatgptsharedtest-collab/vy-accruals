@@ -16,27 +16,20 @@ interface ExternalApartment {
 
 export const updateApartments = async (prisma: PrismaClient, body: UpdateDto<ExternalApartment[]>) => {
     for (const item of body.data) {
-        await prisma.$executeRaw`
-            INSERT INTO apartments (
-                apartment_external_id,
-                address,
-                description,
-                unit_id,
-                debt,
-                invoice_disabled,
-                must_confirm,
-                gaz_type
-            ) VALUES (
-                ${item.id},
-                ${item.address},
-                ${item.description ?? null},
-                ${item.unitId ?? null},
-                ${item.debt ?? null},
-                ${item.invoiceDisabled},
-                ${item.mustConfirm},
-                ${item.gazType}
-            ) ON CONFLICT (apartment_external_id) DO NOTHING;
-        `;
+        await prisma.apartment.upsert({
+            where: { apartmentExternalId: item.id },
+            update: {},
+            create: {
+                apartmentExternalId: item.id,
+                address: item.address,
+                description: item.description ?? null,
+                unitId: item.unitId ?? null,
+                debt: item.debt ?? null,
+                invoiceDisabled: item.invoiceDisabled,
+                mustConfirm: item.mustConfirm,
+                gazType: item.gazType,
+            },
+        });
     }
     return new SuccessResponse();
 };
