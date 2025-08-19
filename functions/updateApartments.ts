@@ -1,4 +1,4 @@
-import { Connection } from 'mysql2/promise';
+import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
 import { UpdateDto } from '../helpers/types';
 
@@ -14,31 +14,29 @@ interface ExternalApartment {
     gazType: number;
 }
 
-export const updateApartments = async (connection: Connection, body: UpdateDto<ExternalApartment[]>) => {
-    const values = body.data.map((item) => [
-        item.id,
-        item.address,
-        item.description || null,
-        item.unitId || null,
-        item.debt || null,
-        item.invoiceDisabled,
-        item.mustConfirm,
-        item.gazType,
-    ]);
-
-    const sql = `
-INSERT IGNORE INTO apartments (
-apartment_external_id,
-address,
-description,
-unit_id,
-debt,
-invoice_disabled,
-must_confirm,
-gaz_type
-) VALUES ?
-`;
-
-    await connection.query(sql, [values]);
+export const updateApartments = async (prisma: PrismaClient, body: UpdateDto<ExternalApartment[]>) => {
+    for (const item of body.data) {
+        await prisma.$executeRaw`
+            INSERT INTO apartments (
+                apartment_external_id,
+                address,
+                description,
+                unit_id,
+                debt,
+                invoice_disabled,
+                must_confirm,
+                gaz_type
+            ) VALUES (
+                ${item.id},
+                ${item.address},
+                ${item.description ?? null},
+                ${item.unitId ?? null},
+                ${item.debt ?? null},
+                ${item.invoiceDisabled},
+                ${item.mustConfirm},
+                ${item.gazType}
+            ) ON CONFLICT (apartment_external_id) DO NOTHING;
+        `;
+    }
     return new SuccessResponse();
 };
