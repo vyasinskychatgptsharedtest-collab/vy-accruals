@@ -7,7 +7,11 @@
     "start": "node dist/app.js",
     "dev": "nodemon --watch . --ext ts --exec ts-node app.ts",
     "lint": "eslint '*.ts' --quiet --fix",
-    "test": "npm run build"
+    "test": "npm run build",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",
