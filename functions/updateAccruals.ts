@@ -1,4 +1,4 @@
-import { Connection } from 'mysql2/promise';
+import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
 import { UpdateDto } from '../helpers/types';
 
@@ -14,33 +14,28 @@ interface ExternalAccrual {
     invoiceExists: boolean;
 }
 
-export const updateAccruals = async (connection: Connection, body: UpdateDto<ExternalAccrual[]>) => {
-    const values = body.data.map((accrual) => [
-        accrual.accountId,
-        accrual.periodName,
-        accrual.periodId,
-        accrual.inBalance,
-        accrual.sum,
-        accrual.fine,
-        accrual.toPay,
-        accrual.payed,
-        accrual.invoiceExists,
-    ]);
-
-    const sql = `
-INSERT IGNORE INTO accruals (
-account_external_id,
-period_name,
-period_id,
-in_balance,
-total_sum,
-fine,
-to_pay,
-payed,
-invoice_exists
-) VALUES ?
-`;
-
-    await connection.query(sql, [values]);
+export const updateAccruals = async (prisma: PrismaClient, body: UpdateDto<ExternalAccrual[]>) => {
+    for (const accrual of body.data) {
+        await prisma.accrual.upsert({
+            where: {
+                accountExternalId_periodName: {
+                    accountExternalId: accrual.accountId,
+                    periodName: accrual.periodName,
+                },
+            },
+            update: {},
+            create: {
+                accountExternalId: accrual.accountId,
+                periodName: accrual.periodName,
+                periodId: accrual.periodId,
+                inBalance: accrual.inBalance,
+                totalSum: accrual.sum,
+                fine: accrual.fine,
+                toPay: accrual.toPay,
+                payed: accrual.payed,
+                invoiceExists: accrual.invoiceExists,
+            },
+        });
+    }
     return new SuccessResponse();
 };

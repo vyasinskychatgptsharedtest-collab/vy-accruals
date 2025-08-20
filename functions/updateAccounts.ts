@@ -1,4 +1,4 @@
-import { Connection } from 'mysql2/promise';
+import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
 import { UpdateDto } from '../helpers/types';
 
@@ -12,22 +12,21 @@ interface ExternalAccount {
     apartmentId: number;
 }
 
-export const updateAccounts = async (connection: Connection, body: UpdateDto<ExternalAccount[]>) => {
-    const sql = `INSERT IGNORE INTO accounts (
-    account_external_id, organization_name, organization_id, 
-    address, type, debt, apartment_id
-  ) VALUES ?`;
-
-    const values = body.data.map((account) => [
-        account.id,
-        account.organizationName,
-        account.organizationId,
-        account.address,
-        account.type,
-        account.debt,
-        account.apartmentId,
-    ]);
-
-    await connection.query(sql, [values]);
+export const updateAccounts = async (prisma: PrismaClient, body: UpdateDto<ExternalAccount[]>) => {
+    for (const account of body.data) {
+        await prisma.account.upsert({
+            where: { accountExternalId: account.id },
+            update: {},
+            create: {
+                accountExternalId: account.id,
+                organizationName: account.organizationName,
+                organizationId: account.organizationId,
+                address: account.address,
+                type: account.type,
+                debt: account.debt,
+                apartmentId: account.apartmentId,
+            },
+        });
+    }
     return new SuccessResponse();
 };

@@ -1,0 +1,78 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Apartment {
+  id                 Int      @id @default(autoincrement()) @map("apartment_id")
+  apartmentExternalId Int     @unique @map("apartment_external_id")
+  address            String
+  description        String?
+  unitId             String?  @map("unit_id")
+  debt               Decimal? @map("debt")
+  invoiceDisabled    Boolean  @default(false) @map("invoice_disabled")
+  mustConfirm        Boolean  @default(false) @map("must_confirm")
+  gazType            Int      @default(0) @map("gaz_type")
+  createdAt          DateTime @default(now()) @map("created_at")
+  @@map("apartments")
+}
+
+model Account {
+  id                Int      @id @default(autoincrement()) @map("account_id")
+  accountExternalId Int      @unique @map("account_external_id")
+  organizationName  String   @map("organization_name")
+  organizationId    String   @map("organization_id")
+  address           String?
+  type              String?
+  debt              Decimal? @map("debt")
+  apartmentId       Int      @map("apartment_id")
+  accruals          Accrual[]
+  @@map("accounts")
+}
+
+model Accrual {
+  id               Int      @id @default(autoincrement())
+  periodName       String?  @map("period_name")
+  periodId         Int      @map("period_id")
+  inBalance        Decimal? @map("in_balance")
+  totalSum         Decimal? @map("total_sum")
+  fine             Decimal? @map("fine")
+  toPay            Decimal? @map("to_pay")
+  payed            Decimal? @map("payed")
+  invoiceExists    Boolean? @map("invoice_exists")
+  accountExternalId Int     @map("account_external_id")
+  s3InvoiceUrl     String?  @unique @map("s3_invoice_url")
+  account          Account  @relation(fields: [accountExternalId], references: [accountExternalId])
+  @@unique([accountExternalId, periodName], map: "accruals_account_period_unique")
+  @@map("accruals")
+}
+
+model Parsing {
+  id        Int             @id @default(autoincrement())
+  createdAt DateTime        @default(now()) @map("created_at")
+  results   ParsingResult[]
+  @@map("parsings")
+}
+
+model Step {
+  id      Int     @id @default(autoincrement())
+  name    String? @unique
+  results ParsingResult[]
+  @@map("steps")
+}
+
+model ParsingResult {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  message   String?
+  stepId    Int?     @map("step_id")
+  isSuccess Boolean  @default(false) @map("is_success")
+  parsingId Int?     @map("parsing_id")
+  step      Step?    @relation(fields: [stepId], references: [id])
+  parsing   Parsing? @relation(fields: [parsingId], references: [id])
+  @@map("parsing_results")
+}

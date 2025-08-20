@@ -32,6 +32,7 @@
             updateAccounts: 'updateAccounts',
             updateAccruals: 'updateAccruals',
         };
+        serverUrl = 'http://127.0.0.1:3000/';
 
         async start() {
             await this.updateMissingInvoices();
@@ -74,10 +75,10 @@
         async updateApartmentsStep() {
             const getApartmentsUrl = this.makeUrl('personal/apartment');
             const apartments = await this.sendRequest(getApartmentsUrl);
-            const url = this.makeAWSUrl('update-apartments');
+            const url = this.makeServerUrl('updateApartments');
             const options = {
                 method: 'POST',
-                body: JSON.stringify(apartments),
+                body: JSON.stringify({ data: apartments }),
             };
             await this.sendRequest(url, options);
             const apartmentIdsToParse = apartments.map((item) => item.id);
@@ -120,10 +121,10 @@
                         apartmentId: item.apartmentId,
                     })),
                 );
-            const updateUrl = this.makeAWSUrl('update-accounts');
+            const updateUrl = this.makeServerUrl('updateAccounts');
             const options = {
                 method: 'POST',
-                body: JSON.stringify(resultsToUpdateInAws),
+                body: JSON.stringify({ data: resultsToUpdateInAws }),
             };
             await this.sendRequest(updateUrl, options);
             const allSuccess = results.every((result) => result.status === 'fulfilled');
@@ -176,10 +177,10 @@
                         invoiceExists: accrual.invoiceExists,
                     })),
                 );
-            const updateUrl = this.makeAWSUrl('update-accruals');
+            const updateUrl = this.makeServerUrl('updateAccruals');
             const options = {
                 method: 'POST',
-                body: JSON.stringify(resultsToUpdateInAws),
+                body: JSON.stringify({ data: resultsToUpdateInAws }),
             };
             await this.sendRequest(updateUrl, options);
             const allSuccess = results.every((result) => result.status === 'fulfilled');
@@ -197,10 +198,10 @@
         async uploadInvoiceToS3() {}
 
         async updateMissingInvoices() {
-            const awsUrl = this.makeAWSUrl('get-missing-invoices');
-            const data = await this.sendRequest(awsUrl);
+            const url = this.makeServerUrl('getMissingInvoices');
+            const data = await this.sendRequest(url);
             if (data.length === 0) return;
-            const sliced = data.result.slice(0, 5);
+            const sliced = data.slice(0, 5);
             const promises = sliced.map((accrual) => this.getInvoiceFormDataForAccrual(accrual));
             const results = await Promise.allSettled(promises);
             const resultsToUploadToS3 = results.filter((i) => i.status === 'fulfilled').map((i) => i.value);
@@ -209,7 +210,7 @@
                 formData.append(name, blob, fileName);
             });
             formData.append('config', JSON.stringify(sliced));
-            const uploadUrl = this.makeAWSUrl('upload-invoices-to-s3');
+            const uploadUrl = this.makeServerUrl('uploadInvoicesToS3');
             const options = {
                 method: 'POST',
                 body: formData,
@@ -245,13 +246,13 @@
             if (!response.ok) {
                 await this.handleError(`Fetch error to url: ${url}$. Data: ${logData}`);
             }
-            const isLambdaResponse = data && 'isSuccess' in data;
-            if (isLambdaResponse && !data.isSuccess && !stopProcessing) {
+            const isServerResponse = data && 'isSuccess' in data;
+            if (isServerResponse && !data.isSuccess && !stopProcessing) {
                 await this.handleError(`Backend error to url ${url}: ${logData}`);
             } else if (data.isSuccess) {
                 console.log(`%cSuccessfully fetched url: ${url}, data: ${logData}`, 'color: green');
             }
-            return isLambdaResponse ? data.data : data;
+            return isServerResponse ? data.data : data;
         }
 
         async sendPdfRequest(url) {
@@ -271,29 +272,31 @@
             return 'https://xn--j1ab.xn--80aaaf3bi1ahsd.xn--80asehdb/' + pathname;
         }
 
-        makeAWSUrl(pathname) {
-            return 'https://77iqvk23va.execute-api.ap-southeast-1.amazonaws.com/default/' + pathname;
+        makeServerUrl(pathname) {
+            return this.serverUrl + pathname;
         }
 
         async updateParsing(isSuccess, message) {
             if (!this.parsingId) {
                 throw new Error('No parsingId provided while setting up last step ' + this.lastStep);
             }
-            const url = this.makeAWSUrl('update_parsing_result_by_id');
+            const url = this.makeServerUrl('updateParsingResult');
             const options = {
                 method: 'POST',
                 body: JSON.stringify({
-                    parsingId: this.parsingId,
-                    step: this.lastStep,
-                    isSuccess,
-                    message,
+                    data: {
+                        parsingId: this.parsingId,
+                        step: this.lastStep,
+                        isSuccess,
+                        message,
+                    },
                 }),
             };
             await this.sendRequest(url, options, !isSuccess);
         }
 
         async createParsing() {
-            const url = this.makeAWSUrl('create_parsing');
+            const url = this.makeServerUrl('createParsing');
             const options = {
                 method: 'POST',
             };

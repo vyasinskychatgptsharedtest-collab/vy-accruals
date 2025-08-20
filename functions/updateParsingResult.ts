@@ -1,4 +1,4 @@
-import { Connection } from 'mysql2/promise';
+import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
 import { UpdateDto } from '../helpers/types';
 
@@ -9,14 +9,15 @@ interface ParsingResult {
     message: string;
 }
 
-export const updateParsingResult = async (connection: Connection, body: UpdateDto<ParsingResult>) => {
+export const updateParsingResult = async (prisma: PrismaClient, body: UpdateDto<ParsingResult>) => {
     const { parsingId, step, isSuccess, message } = body.data;
-
-    const sql = `
-INSERT INTO parsing_results (parsing_id, step_id, is_success, message)
-VALUES (?, (SELECT id FROM steps WHERE name = ?), ?, ?)
-`;
-
-    await connection.query(sql, [parsingId, step, isSuccess, message]);
+    await prisma.parsingResult.create({
+        data: {
+            parsing: { connect: { id: parsingId } },
+            step: { connect: { name: step } },
+            isSuccess,
+            message,
+        },
+    });
     return new SuccessResponse();
 };
