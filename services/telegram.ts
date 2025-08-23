@@ -14,12 +14,16 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
             return;
         }
 
-        const text = `Новая квитанция:\n
-🏢 Организация: ${invoice.account.organizationName}
+        let text = `🏢 Организация: ${invoice.account.organizationName}
 🏠 Адрес: ${invoice.account.address}
 📅 Период: ${invoice.periodName}\n
-💰 Общая сумма: ${invoice.totalSum}
-⚠️ Штраф: ${invoice.fine}`;
+💰 Сумма к оплате: ${invoice.totalSum}
+${invoice.fine && invoice.fine.toNumber() > 0 ? `⚠️ Штраф: ${invoice.fine.toNumber()}` : ''}
+${invoice.inBalance ? `💳 Общая задолженность: ${invoice.inBalance.toNumber()}` : ''}`;
+
+if (invoice.inBalance && invoice.totalSum && invoice.inBalance.toNumber() > invoice.totalSum.toNumber()) {
+    text += `\n\n❗ Общая задолженность превышает сумму текущей квитанции`;
+}
 
         const url = `https://api.telegram.org/bot${token}/sendDocument`;
 
