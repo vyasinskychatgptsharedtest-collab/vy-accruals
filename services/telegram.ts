@@ -42,10 +42,34 @@ if (invoice.inBalance && invoice.totalSum && invoice.inBalance.toNumber() > invo
         formData.append('document', documentUrl);
 
         const fetchFn = (globalThis as any).fetch as any;
-        await fetchFn(url, {
-            method: 'POST',
-            body: formData,
-        });
+
+        while (true) {
+            const response = await fetchFn(url, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                break;
+            }
+
+            if (response.status === 429) {
+                let retryAfter = 1;
+
+                try {
+                    const data = await response.json();
+                    retryAfter = data?.parameters?.retry_after ?? retryAfter;
+                } catch (err) {
+                    logger.error(`sendInvoiceToTelegram parse error: ${(err as Error).message}`);
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000));
+                continue;
+            }
+
+            const body = await response.text();
+            throw new Error(`Telegram sendDocument failed: ${response.status} ${body}`);
+        }
     } catch (error) {
         const message = (error as Error).message;
         logger.error(`sendInvoiceToTelegram: ${message}`);
