@@ -39,6 +39,7 @@ export const updateAccruals = async (prisma: PrismaClient, body: UpdateDto<Exter
                     invoiceExists: accrual.invoiceExists,
                 },
             });
+            logger.info(`Upserted accrual for account ${accrual.accountId} period ${accrual.periodId}`);
         }
         return new SuccessResponse();
     } catch (error) {

@@ -18,6 +18,7 @@ async function main() {
       await prisma.step.create({
         data: step,
       });
+      logger.info(`Created step ${step.name}`);
     }
     logger.info('Steps have been seeded');
   } catch (error) {
@@ -34,4 +35,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    logger.info('Database connection closed');
   });

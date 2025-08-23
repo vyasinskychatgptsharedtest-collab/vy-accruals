@@ -8,6 +8,7 @@ export const getMissingInvoices = async (prisma: PrismaClient) => {
             where: { invoiceExists: true, s3InvoiceUrl: null },
             select: { id: true, accountExternalId: true, periodId: true },
         });
+        logger.info(`Retrieved ${result.length} invoices missing from storage`);
         return new SuccessResponse(result);
     } catch (error) {
         const message = (error as Error).message;

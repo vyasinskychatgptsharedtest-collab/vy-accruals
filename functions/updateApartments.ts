@@ -32,6 +32,7 @@ export const updateApartments = async (prisma: PrismaClient, body: UpdateDto<Ext
                     gazType: item.gazType,
                 },
             });
+            logger.info(`Upserted apartment ${item.id}`);
         }
         return new SuccessResponse();
     } catch (error) {

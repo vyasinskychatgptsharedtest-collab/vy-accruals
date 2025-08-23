@@ -51,6 +51,7 @@ export const uploadInvoicesToS3 = async (
                 },
                 data: { s3InvoiceUrl: url },
             });
+            logger.info(`Saved invoice for account ${accountExternalId} period ${periodId}`);
         }
 
         return new SuccessResponse(true);

@@ -21,6 +21,7 @@ export const createParsingResult = async (prisma: PrismaClient, body: UpdateDto<
                 message,
             },
         });
+        logger.info(`Saved parsing result for parsing ${parsingId} at step ${step}`);
         return new SuccessResponse();
     } catch (error) {
         const errMsg = (error as Error).message;

@@ -29,6 +29,7 @@ export const updateAccounts = async (prisma: PrismaClient, body: UpdateDto<Exter
                     apartmentId: account.apartmentId,
                 },
             });
+            logger.info(`Upserted account ${account.id}`);
         }
         return new SuccessResponse();
     } catch (error) {

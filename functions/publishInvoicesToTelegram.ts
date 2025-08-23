@@ -8,6 +8,7 @@ export const publishInvoicesToTelegram = async (prisma: PrismaClient) => {
             where: { telegramPublished: false, s3InvoiceUrl: { not: null } },
             include: { account: true },
         });
+        logger.info(`Found ${invoices.length} invoices to publish to Telegram`);
 
         for (const invoice of invoices) {
             await sendInvoiceToTelegram(invoice);
@@ -15,6 +16,7 @@ export const publishInvoicesToTelegram = async (prisma: PrismaClient) => {
                 where: { id: invoice.id },
                 data: { telegramPublished: true },
             });
+            logger.info(`Marked invoice ${invoice.id} as published to Telegram`);
         }
     } catch (error) {
         const message = (error as Error).message;
