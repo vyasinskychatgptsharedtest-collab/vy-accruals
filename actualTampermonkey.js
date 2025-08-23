@@ -178,7 +178,7 @@
             const allSuccess = results.every((result) => result.status === 'fulfilled');
             if (allSuccess) {
                 await this.setLastStep(this.steps.updateAccruals);
-                // check new accruals and send (bot)
+                await this.updateMissingInvoices();
             }
         }
 
@@ -193,27 +193,27 @@
             const action = 'getMissingInvoices';
             const awsUrl = this.makeLambdaUrl(action);
             const data = await this.sendRequest(awsUrl);
-            if (data.length === 0) return;
-            const sliced = data.result.slice(0, 5);
+            if (!data || data.length === 0) return;
+            const sliced = data.slice(0, 5);
             const promises = sliced.map((accrual) => this.getInvoiceFormDataForAccrual(accrual));
             const results = await Promise.allSettled(promises);
-            const resultsToUploadToS3 = results.filter((i) => i.status === 'fulfilled').map((i) => i.value);
+            const resultsToUploadToS3 = results
+                .filter((i) => i.status === 'fulfilled')
+                .map((i) => i.value);
             const formData = new FormData();
             resultsToUploadToS3.forEach(([name, blob, fileName]) => {
                 formData.append(name, blob, fileName);
             });
             formData.append('config', JSON.stringify(sliced));
-            const uploadUrl = this.lambdaUrl;
+            const uploadUrl = this.makeLambdaUrl('uploadInvoicesToS3');
             const options = {
                 method: 'POST',
                 body: formData,
-                // TODO: добавить action uploadInvoicesToS3
             };
-            const result = await fetch(uploadUrl, options);
+            await fetch(uploadUrl, options);
             setTimeout(function () {
                 window.location.reload();
             }, 10000);
-            // const allSuccess = results.every(result => result.status === 'fulfilled');
         }
 
         async getInvoiceFormDataForAccrual(accrual) {

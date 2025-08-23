@@ -6,8 +6,10 @@ import { updateAccounts } from './functions/updateAccounts';
 import { updateAccruals } from './functions/updateAccruals';
 import { createParsingResult } from './functions/createParsingResult';
 import { getMissingInvoices } from './functions/getMissingInvoices';
+import { uploadInvoicesToS3 } from './functions/uploadInvoicesToS3';
 import { ErrorResponse } from './helpers/response';
 import cors from 'cors';
+import multer from 'multer';
 
 const app = express();
 // Разрешаем CORS для всех доменов или указываем конкретный домен
@@ -17,6 +19,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const prisma = new PrismaClient();
 
@@ -68,6 +72,17 @@ app.post('/createParsingResult', async (req: Request, res: Response) => {
 app.get('/getMissingInvoices', async (_req: Request, res: Response) => {
     try {
         const response = await getMissingInvoices(prisma);
+        res.json(response);
+    } catch (error) {
+        res.status(500).json(new ErrorResponse((error as Error).message));
+    }
+});
+
+app.post('/uploadInvoicesToS3', upload.array('pdfFile'), async (req: Request, res: Response) => {
+    try {
+        const config = req.body.config ? JSON.parse(req.body.config) : [];
+        const files = req.files as Express.Multer.File[];
+        const response = await uploadInvoicesToS3(prisma, files, config);
         res.json(response);
     } catch (error) {
         res.status(500).json(new ErrorResponse((error as Error).message));
