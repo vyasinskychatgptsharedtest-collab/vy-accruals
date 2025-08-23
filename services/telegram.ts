@@ -21,18 +21,33 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
 ${invoice.fine && invoice.fine.toNumber() > 0 ? `⚠️ Штраф: ${invoice.fine.toNumber()}` : ''}
 ${invoice.inBalance ? `💳 Общая задолженность: ${invoice.inBalance.toNumber()}` : ''}`;
 
-if (invoice.inBalance && invoice.totalSum && invoice.inBalance.toNumber() > invoice.totalSum.toNumber()) {
-    text += `\n\n❗ Общая задолженность превышает сумму текущей квитанции`;
-}
+        if (
+            invoice.inBalance &&
+            invoice.totalSum &&
+            invoice.inBalance.toNumber() > invoice.totalSum.toNumber()
+        ) {
+            text += `\n\n❗ Общая задолженность превышает сумму текущей квитанции`;
+        }
+
+        const sanitize = (value: string) => value.trim().replace(/\s+/g, '_');
+        const organizationName = sanitize(invoice.account.organizationName);
+        const periodName = sanitize(
+            invoice.periodName ?? invoice.periodId.toString(),
+        );
+        const totalSum = invoice.totalSum?.toNumber() ?? 0;
+        const fileName = `${organizationName}_${periodName}_${totalSum}.pdf`;
+
+        const fetchFn = (globalThis as any).fetch as any;
+        const fileResponse = await fetchFn(invoice.s3InvoiceUrl);
+        const fileBuffer = await fileResponse.arrayBuffer();
 
         const url = `https://api.telegram.org/bot${token}/sendDocument`;
 
         const formData = new FormData();
         formData.append('chat_id', channelId);
         formData.append('caption', text);
-        formData.append('document', invoice.s3InvoiceUrl);
+        formData.append('document', new Blob([fileBuffer]), fileName);
 
-        const fetchFn = (globalThis as any).fetch as any;
         await fetchFn(url, {
             method: 'POST',
             body: formData,
