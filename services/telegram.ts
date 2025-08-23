@@ -8,15 +8,22 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const channelId = process.env.TELEGRAM_CHANNEL_ID;
 
-    if (!token || !channelId) {
+    if (!token || !channelId || !invoice.s3InvoiceUrl) {
         return;
     }
 
-    const text = `Период: ${invoice.periodName}\nСумма: ${invoice.toPay}\nАдрес: ${invoice.account.address}\nСсылка: ${invoice.s3InvoiceUrl}`;
+    const text = `Период: ${invoice.periodName}\nСумма: ${invoice.toPay}\nАдрес: ${invoice.account.address}`;
 
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    const body = new URLSearchParams({ chat_id: channelId, text });
+    const url = `https://api.telegram.org/bot${token}/sendDocument`;
+
+    const formData = new FormData();
+    formData.append('chat_id', channelId);
+    formData.append('caption', text);
+    formData.append('document', invoice.s3InvoiceUrl);
 
     const fetchFn = (globalThis as any).fetch as any;
-    await fetchFn(url, { method: 'POST', body });
+    await fetchFn(url, {
+        method: 'POST',
+        body: formData,
+    });
 };

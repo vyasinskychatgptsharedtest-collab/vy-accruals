@@ -10,6 +10,7 @@ import { uploadInvoicesToS3 } from './functions/uploadInvoicesToS3';
 import { ErrorResponse } from './helpers/response';
 import cors from 'cors';
 import multer from 'multer';
+import { publishInvoicesToTelegram } from './functions/publishInvoicesToTelegram';
 
 const app = express();
 // Разрешаем CORS для всех доменов или указываем конкретный домен
@@ -83,6 +84,7 @@ app.post('/uploadInvoicesToS3', upload.array('pdfFile'), async (req: Request, re
         const config = req.body.config ? JSON.parse(req.body.config) : [];
         const files = req.files as Express.Multer.File[];
         const response = await uploadInvoicesToS3(prisma, files, config);
+        await publishInvoicesToTelegram(prisma);
         res.json(response);
     } catch (error) {
         res.status(500).json(new ErrorResponse((error as Error).message));
