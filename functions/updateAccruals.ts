@@ -18,9 +18,10 @@ export const updateAccruals = async (prisma: PrismaClient, body: UpdateDto<Exter
     for (const accrual of body.data) {
         await prisma.accrual.upsert({
             where: {
-                accountExternalId_periodName: {
+                // Используем правильный составной ключ с accountExternalId и periodId
+                accountExternalId_periodId: {
                     accountExternalId: accrual.accountId,
-                    periodName: accrual.periodName,
+                    periodId: accrual.periodId,
                 },
             },
             update: {},

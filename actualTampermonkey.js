@@ -217,10 +217,10 @@
         }
 
         async getInvoiceFormDataForAccrual(accrual) {
-            const { account_external_id, period_id, id } = accrual;
-            const blob = await this.getInvoiceToAccountForPeriod(account_external_id, period_id);
+            const { accountExternalId, periodId } = accrual;
+            const blob = await this.getInvoiceToAccountForPeriod(accountExternalId, periodId);
             const name = 'pdfFile';
-            const fileName = `${id}.pdf`;
+            const fileName = `${accountExternalId}_${periodId}.pdf`;
             return [name, blob, fileName];
         }
 

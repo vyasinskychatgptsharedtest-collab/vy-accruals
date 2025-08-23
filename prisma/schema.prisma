@@ -47,7 +47,7 @@ model Accrual {
   accountExternalId Int     @map("account_external_id")
   s3InvoiceUrl     String?  @unique @map("s3_invoice_url")
   account          Account  @relation(fields: [accountExternalId], references: [accountExternalId])
-  @@unique([accountExternalId, periodName], map: "accruals_account_period_unique")
+  @@unique([accountExternalId, periodId], map: "accruals_account_period_unique")
   @@map("accruals")
 }
 

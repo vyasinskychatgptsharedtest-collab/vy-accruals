@@ -18,8 +18,15 @@ export const uploadInvoicesToS3 = async (
     const s3 = new S3Client({ region });
 
     for (const file of files) {
-        const id = parseInt(file.originalname.replace('.pdf', ''));
-        const key = `${id}.pdf`;
+        // Разделяем имя файла на accountExternalId и periodId
+        const [accountExternalId, periodId] = file.originalname
+            .replace('.pdf', '')
+            .split('_')
+            .map((part) => parseInt(part));
+
+        const key = `${accountExternalId}_${periodId}.pdf`;
+
+        // Загружаем файл в S3
         await s3.send(
             new PutObjectCommand({
                 Bucket: bucket,
@@ -28,12 +35,21 @@ export const uploadInvoicesToS3 = async (
                 ContentType: 'application/pdf',
             }),
         );
+
         const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+
+        // Обновляем таблицу по accountExternalId и periodId
         await prisma.accrual.update({
-            where: { id },
+            where: {
+                accountExternalId_periodId: {
+                    accountExternalId,
+                    periodId,
+                },
+            },
             data: { s3InvoiceUrl: url },
         });
     }
 
     return new SuccessResponse(true);
 };
+
