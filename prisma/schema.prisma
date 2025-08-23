@@ -52,7 +52,7 @@ model Accrual {
 }
 
 model Parsing {
-  id        Int             @id @default(autoincrement())
+  id        String             @id @default(cuid())
   createdAt DateTime        @default(now()) @map("created_at")
   results   ParsingResult[]
   @@map("parsings")
@@ -66,12 +66,12 @@ model Step {
 }
 
 model ParsingResult {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
   message   String?
   stepId    Int?     @map("step_id")
   isSuccess Boolean  @default(false) @map("is_success")
-  parsingId Int?     @map("parsing_id")
+  parsingId String?     @map("parsing_id")
   step      Step?    @relation(fields: [stepId], references: [id])
   parsing   Parsing? @relation(fields: [parsingId], references: [id])
   @@map("parsing_results")

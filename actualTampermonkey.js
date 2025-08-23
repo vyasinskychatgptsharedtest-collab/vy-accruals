@@ -32,7 +32,7 @@
             updateAccounts: 'updateAccounts',
             updateAccruals: 'updateAccruals',
         };
-        lambdaUrl = 'http://127.0.0.1:3000/';
+        lambdaUrl = 'http://127.0.0.1:8080/';
 
         async start() {
             console.log('start');
@@ -76,6 +76,7 @@
             const url = this.makeLambdaUrl(action);
             const options = this.makeLambdaOptions(apartments);
             await this.sendRequest(url, options);
+            // TODO: переделать на запрос из БД апартаментов, по которым нет результатов за сегодня
             const apartmentIdsToParse = apartments.map((item) => item.id);
             sessionStorage.setItem('apartmentIdsToParse', apartmentIdsToParse);
             await this.updateAccountsStep(apartmentIdsToParse);
@@ -102,7 +103,7 @@
                 };
             });
             const results = await Promise.allSettled(promises);
-            const resultsToUpdateInAws = results
+            const updateAccountsResults = results
                 .filter((i) => i.status === 'fulfilled')
                 .map((i) => i.value)
                 .flatMap((item) =>
@@ -118,12 +119,12 @@
                 );
             const action = 'updateAccounts';
             const updateUrl = this.makeLambdaUrl(action);
-            const options = this.makeLambdaOptions(resultsToUpdateInAws);
+            const options = this.makeLambdaOptions(updateAccountsResults);
             await this.sendRequest(updateUrl, options);
             const allSuccess = results.every((result) => result.status === 'fulfilled');
             if (allSuccess) {
                 await this.setLastStep(this.steps.updateAccounts);
-                const accountIdsToParse = resultsToUpdateInAws.map((result) => result.id);
+                const accountIdsToParse = updateAccountsResults.map((result) => result.id);
                 sessionStorage.setItem('accountIdsToParse', accountIdsToParse);
                 await this.updateAccrualsStep(accountIdsToParse);
             }
@@ -279,7 +280,7 @@
             if (!this.parsingId) {
                 throw new Error('No parsingId provided while setting up last step ' + this.lastStep);
             }
-            const action = 'updateParsingResult';
+            const action = 'createParsingResult';
             const url = this.makeLambdaUrl(action);
             const data = {
                 parsingId: this.parsingId,

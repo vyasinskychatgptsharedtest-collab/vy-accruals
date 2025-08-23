@@ -3,13 +3,13 @@ import { SuccessResponse } from '../helpers/response';
 import { UpdateDto } from '../helpers/types';
 
 interface ParsingResult {
-    parsingId: number;
+    parsingId: string;
     step: string;
     isSuccess: boolean;
     message: string;
 }
 
-export const updateParsingResult = async (prisma: PrismaClient, body: UpdateDto<ParsingResult>) => {
+export const createParsingResult = async (prisma: PrismaClient, body: UpdateDto<ParsingResult>) => {
     const { parsingId, step, isSuccess, message } = body.data;
     await prisma.parsingResult.create({
         data: {
