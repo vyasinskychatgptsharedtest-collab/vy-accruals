@@ -14,6 +14,15 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
             return;
         }
 
+        const sanitizeFileName = (name: string) =>
+            name.replace(/[\r\n\\/\?:*"'<>|]+/g, '').trim();
+
+        const fileName = `${sanitizeFileName(invoice.account.organizationName)} ${sanitizeFileName(invoice.periodName || '')}.pdf`;
+        const delimiter = invoice.s3InvoiceUrl.includes('?') ? '&' : '?';
+        const documentUrl = `${invoice.s3InvoiceUrl}${delimiter}response-content-disposition=${encodeURIComponent(
+            `attachment; filename="${fileName}"`,
+        )}`;
+
         let text = `🏢 Организация: ${invoice.account.organizationName}
 🏠 Адрес: ${invoice.account.address}
 📅 Период: ${invoice.periodName}\n
@@ -30,7 +39,7 @@ if (invoice.inBalance && invoice.totalSum && invoice.inBalance.toNumber() > invo
         const formData = new FormData();
         formData.append('chat_id', channelId);
         formData.append('caption', text);
-        formData.append('document', invoice.s3InvoiceUrl);
+        formData.append('document', documentUrl);
 
         const fetchFn = (globalThis as any).fetch as any;
         await fetchFn(url, {
