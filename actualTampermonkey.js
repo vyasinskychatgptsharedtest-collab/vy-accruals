@@ -194,7 +194,7 @@
             const awsUrl = this.makeLambdaUrl(action);
             const data = await this.sendRequest(awsUrl);
             if (!data || data.length === 0) return;
-            const sliced = data.slice(0, 5);
+            const sliced = data.slice(0, 10);
             const promises = sliced.map((accrual) => this.getInvoiceFormDataForAccrual(accrual));
             const results = await Promise.allSettled(promises);
             const resultsToUploadToS3 = results
