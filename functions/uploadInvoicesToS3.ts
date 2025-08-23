@@ -26,8 +26,33 @@ export const uploadInvoicesToS3 = async (
                 .split('_')
                 .map((part) => parseInt(part));
 
+            // Получаем информацию по начислению для формирования имени файла
+            const invoice = await prisma.accrual.findUnique({
+                where: {
+                    accountExternalId_periodId: {
+                        accountExternalId,
+                        periodId,
+                    },
+                },
+                include: { account: true },
+            });
+
+            if (!invoice) {
+                logger.error(
+                    `Invoice not found for account ${accountExternalId} period ${periodId}`,
+                );
+                continue;
+            }
+
+            const sanitize = (value: string) =>
+                value.trim().replace(/\s+/g, '_');
+
+            const organizationName = sanitize(invoice.account.organizationName);
+            const periodName = sanitize(invoice.periodName ?? periodId.toString());
+            const totalSum = invoice.totalSum?.toNumber() ?? 0;
+
             // Сохраняем каждый инвойс в отдельную папку периода
-            const key = `${periodId}/${accountExternalId}.pdf`;
+            const key = `${periodId}/${organizationName}_${periodName}_${totalSum}.pdf`;
 
             // Загружаем файл в S3
             await s3.send(
