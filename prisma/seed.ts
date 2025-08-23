@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../helpers/logger';
 
 const prisma = new PrismaClient();
 
@@ -11,17 +12,24 @@ const steps = [
 ];
 
 async function main() {
-  // Создаем шаги в базе данных
-  for (const step of steps) {
-    await prisma.step.create({
-      data: step,
-    });
+  try {
+    // Создаем шаги в базе данных
+    for (const step of steps) {
+      await prisma.step.create({
+        data: step,
+      });
+    }
+    logger.info('Steps have been seeded');
+  } catch (error) {
+    const message = (error as Error).message;
+    logger.error(`seed: ${message}`);
+    throw error;
   }
-  console.log('Steps have been seeded');
 }
 
 main()
   .catch(e => {
+    logger.error(`seed main: ${e.message}`);
     throw e;
   })
   .finally(async () => {

@@ -11,6 +11,7 @@ import { ErrorResponse } from './helpers/response';
 import cors from 'cors';
 import multer from 'multer';
 import { publishInvoicesToTelegram } from './functions/publishInvoicesToTelegram';
+import { logger } from './helpers/logger';
 
 const app = express();
 // Разрешаем CORS для всех доменов или указываем конкретный домен
@@ -30,7 +31,9 @@ app.post('/createParsing', async (_req: Request, res: Response) => {
         const response = await createParsing(prisma);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`createParsing: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -39,7 +42,9 @@ app.post('/updateApartments', async (req: Request, res: Response) => {
         const response = await updateApartments(prisma, req.body);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`updateApartments: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -48,7 +53,9 @@ app.post('/updateAccounts', async (req: Request, res: Response) => {
         const response = await updateAccounts(prisma, req.body);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`updateAccounts: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -57,7 +64,9 @@ app.post('/updateAccruals', async (req: Request, res: Response) => {
         const response = await updateAccruals(prisma, req.body);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`updateAccruals: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -66,7 +75,9 @@ app.post('/createParsingResult', async (req: Request, res: Response) => {
         const response = await createParsingResult(prisma, req.body);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`createParsingResult: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -75,7 +86,9 @@ app.get('/getMissingInvoices', async (_req: Request, res: Response) => {
         const response = await getMissingInvoices(prisma);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`getMissingInvoices: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
@@ -87,12 +100,14 @@ app.post('/uploadInvoicesToS3', upload.array('pdfFile'), async (req: Request, re
         await publishInvoicesToTelegram(prisma);
         res.json(response);
     } catch (error) {
-        res.status(500).json(new ErrorResponse((error as Error).message));
+        const message = (error as Error).message;
+        logger.error(`uploadInvoicesToS3: ${message}`);
+        res.status(500).json(new ErrorResponse(message));
     }
 });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    logger.info(`Server running on port ${port}`);
 });
 

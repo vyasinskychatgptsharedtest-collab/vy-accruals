@@ -1,7 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
+import { logger } from '../helpers/logger';
 
 export const createParsing = async (prisma: PrismaClient) => {
-    const parsing = await prisma.parsing.create({ data: {} });
-    return new SuccessResponse({ id: parsing.id });
+    try {
+        const parsing = await prisma.parsing.create({ data: {} });
+        return new SuccessResponse({ id: parsing.id });
+    } catch (error) {
+        const message = (error as Error).message;
+        logger.error(`createParsing: ${message}`);
+        throw error;
+    }
 };

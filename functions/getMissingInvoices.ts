@@ -1,10 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { SuccessResponse } from '../helpers/response';
+import { logger } from '../helpers/logger';
 
 export const getMissingInvoices = async (prisma: PrismaClient) => {
-    const result = await prisma.accrual.findMany({
-        where: { invoiceExists: true, s3InvoiceUrl: null },
-        select: { id: true, accountExternalId: true, periodId: true },
-    });
-    return new SuccessResponse(result);
+    try {
+        const result = await prisma.accrual.findMany({
+            where: { invoiceExists: true, s3InvoiceUrl: null },
+            select: { id: true, accountExternalId: true, periodId: true },
+        });
+        return new SuccessResponse(result);
+    } catch (error) {
+        const message = (error as Error).message;
+        logger.error(`getMissingInvoices: ${message}`);
+        throw error;
+    }
 };
