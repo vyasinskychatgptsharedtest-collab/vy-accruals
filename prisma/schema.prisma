@@ -46,6 +46,7 @@ model Accrual {
   invoiceExists    Boolean? @map("invoice_exists")
   accountExternalId Int     @map("account_external_id")
   s3InvoiceUrl     String?  @unique @map("s3_invoice_url")
+  telegramPublished Boolean  @default(false) @map("telegram_published")
   account          Account  @relation(fields: [accountExternalId], references: [accountExternalId])
   @@unique([accountExternalId, periodId], map: "accruals_account_period_unique")
   @@map("accruals")

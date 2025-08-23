@@ -24,7 +24,8 @@ export const uploadInvoicesToS3 = async (
             .split('_')
             .map((part) => parseInt(part));
 
-        const key = `${accountExternalId}_${periodId}.pdf`;
+        // Сохраняем каждый инвойс в отдельную папку периода
+        const key = `${periodId}/${accountExternalId}.pdf`;
 
         // Загружаем файл в S3
         await s3.send(
