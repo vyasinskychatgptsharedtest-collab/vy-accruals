@@ -14,13 +14,23 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
             return;
         }
 
+        // Формируем основное сообщение
         let text = `🏢 Организация: ${invoice.account.organizationName}
 🏠 Адрес: ${invoice.account.address}
 📅 Период: ${invoice.periodName}\n
-💰 Сумма к оплате: ${invoice.totalSum}
-${invoice.fine && invoice.fine.toNumber() > 0 ? `⚠️ Штраф: ${invoice.fine.toNumber()}` : ''}
-${invoice.inBalance ? `💳 Общая задолженность: ${invoice.inBalance.toNumber()}` : ''}`;
+💰 Сумма к оплате: ${invoice.totalSum}руб.`;
 
+        // Добавляем штраф, если он есть
+        if (invoice.fine && invoice.fine.toNumber() > 0) {
+            text += `\n⚠️ Штраф: ${invoice.fine.toNumber()}руб.`;
+        }
+
+        // Добавляем общую задолженность, если она есть
+        if (invoice.inBalance) {
+            text += `\n💳 Общая задолженность: ${invoice.inBalance.toNumber()}руб.`;
+        }
+
+        // Проверяем, если задолженность больше суммы счета
         if (
             invoice.inBalance &&
             invoice.totalSum &&
@@ -29,13 +39,12 @@ ${invoice.inBalance ? `💳 Общая задолженность: ${invoice.inB
             text += `\n\n❗ Общая задолженность превышает сумму текущей квитанции`;
         }
 
+        // Сохраняем файл с корректным именем
         const sanitize = (value: string) => value.trim().replace(/\s+/g, '_');
         const organizationName = sanitize(invoice.account.organizationName);
-        const periodName = sanitize(
-            invoice.periodName ?? invoice.periodId.toString(),
-        );
+        const periodName = sanitize(invoice.periodName ?? invoice.periodId.toString());
         const totalSum = invoice.totalSum?.toNumber() ?? 0;
-        const fileName = `${organizationName}_${periodName}_${totalSum}.pdf`;
+        const fileName = `${organizationName}_${periodName}_${totalSum}руб.pdf`;
 
         const fetchFn = (globalThis as any).fetch as any;
         const fileResponse = await fetchFn(invoice.s3InvoiceUrl);
@@ -48,6 +57,7 @@ ${invoice.inBalance ? `💳 Общая задолженность: ${invoice.inB
         formData.append('caption', text);
         formData.append('document', new Blob([fileBuffer]), fileName);
 
+        // Отправляем запрос
         await fetchFn(url, {
             method: 'POST',
             body: formData,
