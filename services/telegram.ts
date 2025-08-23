@@ -14,7 +14,12 @@ export const sendInvoiceToTelegram = async (invoice: Invoice) => {
             return;
         }
 
-        const text = `Период: ${invoice.periodName}\nСумма: ${invoice.toPay}\nАдрес: ${invoice.account.address}`;
+        const text = `Новая квитанция:\n
+🏢 Организация: ${invoice.account.organizationName}
+🏠 Адрес: ${invoice.account.address}
+📅 Период: ${invoice.periodName}\n
+💰 Общая сумма: ${invoice.totalSum}
+⚠️ Штраф: ${invoice.fine}`;
 
         const url = `https://api.telegram.org/bot${token}/sendDocument`;
 

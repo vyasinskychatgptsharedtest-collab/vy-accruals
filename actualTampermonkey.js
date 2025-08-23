@@ -92,7 +92,7 @@
                         `No ids to parse. ApartmentIds: ${apartmentIds}. sessionIdsAsString: ${sessionIdsAsString}`,
                     );
                 }
-                const sessionIds = sessionIdsAsString.split(',');
+                const sessionIds = sessionIdsAsString.split(',').map(id => parseInt(id));
                 idsToParse = sessionIds;
             }
             const promises = idsToParse.map(async (id) => {
@@ -144,7 +144,7 @@
                         `No ids to parse. AccountIds: ${accountIds}. sessionIdsAsString: ${sessionIdsAsString}`,
                     );
                 }
-                const sessionIds = sessionIdsAsString.split(',');
+                const sessionIds = sessionIdsAsString.split(',').map(id => parseInt(id));
                 idsToParse = sessionIds;
             }
             const promises = idsToParse.map(async (id) => {
